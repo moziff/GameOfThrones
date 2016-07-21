@@ -5,11 +5,11 @@ library(plotly) #Use plotly
 #connection to dashDB
 dsn_driver <- "BLUDB"
 dsn_database <- "BLUDB" 
-dsn_hostname <- "dashdb-entry-yp-dal09-07.services.dal.bluemix.net" 
+dsn_hostname <- "ENTER HOSTNAME" 
 dsn_port <- "50000" 
-dsn_protocol <- "TCPIP" 
-dsn_uid <- "dash7802"
-dsn_pwd <- "PJT48sXiCVjT"
+dsn_protocol <- "ENTER PROTOCOL" 
+dsn_uid <- "ENTER Uid"
+dsn_pwd <- "ENTER PASSWORD"
 
 conn_path <- paste(dsn_driver,
                    ";DATABASE=",dsn_database,
