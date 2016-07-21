@@ -1,0 +1,484 @@
+library(RODBC) #Package RODBC implements ODBC database connectivity
+library(sqldf) # Manipulate R data frames using SQL.
+library(plotly) #Use plotly
+
+#connection to dashDB
+dsn_driver <- "BLUDB"
+dsn_database <- "BLUDB" 
+dsn_hostname <- "dashdb-entry-yp-dal09-07.services.dal.bluemix.net" 
+dsn_port <- "50000" 
+dsn_protocol <- "TCPIP" 
+dsn_uid <- "dash7802"
+dsn_pwd <- "PJT48sXiCVjT"
+
+conn_path <- paste(dsn_driver,
+                   ";DATABASE=",dsn_database,
+                   ";HOSTNAME=",dsn_hostname,
+                   ";PORT=",dsn_port,
+                   ";PROTOCOL=",dsn_protocol,
+                   ";UID=",dsn_uid,
+                   ";PWD=",dsn_pwd,sep="")
+ch <- idaConnect(conn_path) 
+idaInit(ch)
+
+btable <- sqlTables(ch, tableName = "BATTLES")
+sqlColumns(ch, "BATTLES")
+
+#creates a list for the wins and list for the losses
+wins <- sqlQuery(ch, paste("SELECT ATTACKER_1, COUNT(ATTACKER_1) FROM BATTLES", "WHERE ATTACKER_OUTCOME=1", "group by ATTACKER_1")) 
+losses <- sqlQuery(ch, paste("SELECT ATTACKER_1, COUNT(ATTACKER_1) FROM BATTLES", "WHERE ATTACKER_OUTCOME=0", "group by ATTACKER_1"))
+
+#Changes column names so your x and y axis are clear when you create a graph
+names(wins)[2]<-paste("OUTCOME")#changes column name for wins
+names(wins)[1]<-paste("ATTACKER")#changes column name for wins
+names(losses)[2]<-paste("OUTCOME")#changes column name for losses
+names(losses)[1]<-paste("ATTACKER")#changes column name for losses
+
+
+#Plot wins and losses by family
+WinsOutcome <- plot_ly(data = wins, x=ATTACKER, y=OUTCOME,type="bar")
+LossesOutcome <- plot_ly(data = losses, x=ATTACKER, y=OUTCOME,type="bar")
+
+
+LannisterWins <- sqlQuery(ch, paste("SELECT ATTACKER_OUTCOME FROM BATTLES", "WHERE ATTACKER_1 = 'Lannister'"))
+GreyJoyWins <- sqlQuery(ch, paste("SELECT ATTACKER_OUTCOME FROM BATTLES", "WHERE ATTACKER_1 = 'Greyjoy'"))
+StarkWins <- sqlQuery(ch, paste("SELECT ATTACKER_OUTCOME FROM BATTLES", "WHERE ATTACKER_1 = 'Stark'"))
+FreyWins <- sqlQuery(ch, paste("SELECT ATTACKER_OUTCOME FROM BATTLES", "WHERE ATTACKER_1 = 'Frey'"))
+BaratheonWins <- sqlQuery(ch, paste("SELECT ATTACKER_OUTCOME FROM BATTLES", "WHERE ATTACKER_1 = 'Baratheon'"))
+
+totalLannisterWins <- c(sum(LannisterWins))
+totalGreyjoyWins <- c(sum(GreyJoyWins))
+totalStarkWins <- c(sum(StarkWins))
+totalFreyWins <- c(sum(FreyWins))
+totalBaratheonWins <- c(sum(BaratheonWins))
+
+#Table with regions and army size
+RegionsR <- sqlQuery(ch, paste("SELECT REGION, RULED_BY, ARMY_SIZE, ARMY_STRENGTH, ALLIES, BOATS FROM REGIONS"))
+RegionsR
+
+
+LannisterBoats <-sqlQuery(ch, paste("SELECT SUM(BOATS) FROM REGIONS", "WHERE RULED_BY = 'Lannister'"))
+GreyJoyBoats <- sqlQuery(ch, paste("SELECT BOATS FROM REGIONS", "WHERE RULED_BY = 'Greyjoy'"))
+StarkBoats <- sqlQuery(ch, paste("SELECT BOATS FROM REGIONS", "WHERE RULED_BY = 'Stark'"))
+ArrynBoats <- sqlQuery(ch, paste("SELECT BOATS FROM REGIONS", "WHERE RULED_BY = 'Arryn'"))
+MartellBoats <- sqlQuery(ch, paste("SELECT BOATS FROM REGIONS", "WHERE RULED_BY = 'Martell'"))
+TargaryenBoats <- sqlQuery(ch, paste("SELECT BOATS FROM REGIONS", "WHERE RULED_BY = 'Targaryen'"))
+TyrellBoats <- sqlQuery(ch, paste("SELECT BOATS FROM REGIONS", "WHERE RULED_BY = 'Tyrell'"))
+FreyBoats <- sqlQuery(ch, paste("SELECT BOATS FROM REGIONS", "WHERE RULED_BY = 'Frey'"))
+
+
+totalLannisterBoats <- c(sum(LannisterBoats))
+totalGreyjoyBoats <- c(sum(GreyJoyBoats))
+totalStarkBoats <- c(sum(StarkBoats))
+totalArrynBoats <- c(sum(ArrynBoats))
+totalMartellBoats <- c(sum(MartellBoats))
+totalTargaryenBoats <- c(sum(TargaryenBoats))
+totalTyrellBoats <- c(sum(TyrellBoats))
+totalFreyBoats <- c(sum(FreyBoats))
+
+boatsChart <- plot_ly(data = RegionsR, x=RULED_BY, y=BOATS,type="bar")
+boatsChart
+
+
+LannisterArmy <-sqlQuery(ch, paste("SELECT ARMY_SIZE FROM REGIONS", "WHERE RULED_BY = 'Lannister'"))
+GreyJoyArmy <- sqlQuery(ch, paste("SELECT ARMY_SIZE FROM REGIONS", "WHERE RULED_BY = 'Greyjoy'"))
+StarkArmy <- sqlQuery(ch, paste("SELECT ARMY_SIZE FROM REGIONS", "WHERE RULED_BY = 'Stark'"))
+ArrynArmy <- sqlQuery(ch, paste("SELECT ARMY_SIZE FROM REGIONS", "WHERE RULED_BY = 'Arryn'"))
+MartellArmy <- sqlQuery(ch, paste("SELECT ARMY_SIZE FROM REGIONS", "WHERE RULED_BY = 'Martell'"))
+TargaryenArmy <- sqlQuery(ch, paste("SELECT ARMY_SIZE FROM REGIONS", "WHERE RULED_BY = 'Targaryen'"))
+TyrellArmy <- sqlQuery(ch, paste("SELECT ARMY_SIZE FROM REGIONS", "WHERE RULED_BY = 'Tyrell'"))
+FreyArmy <- sqlQuery(ch, paste("SELECT ARMY_SIZE FROM REGIONS", "WHERE RULED_BY = 'Frey'"))
+
+totalLannisterArmy <- c(sum(LannisterArmy))
+totalGreyjoyArmy <- c(sum(GreyJoyArmy))
+totalStarkArmy <- c(sum(StarkArmy))
+totalArrynArmy <- c(sum(ArrynArmy))
+totalMartellArmy <- c(sum(MartellArmy))
+totalTargaryenArmy <- c(sum(TargaryenArmy))
+totalTyrellArmy <- c(sum(TyrellArmy))
+totalFreyArmy <- c(sum(FreyArmy))
+
+#characters both alive and dead
+peopleTable <- sqlQuery(ch, paste("SELECT NAME, ALLEGIANCES, DEATH_YEAR, GENDER, NOBILITY FROM CHARACTERDEATHS"))
+peopleTable
+
+#Lists all the dead Characters
+DEAD <- sqlQuery(ch, paste("SELECT NAME, ALLEGIANCES, GENDER, NOBILITY FROM CHARACTERDEATHS","WHERE DEATH_YEAR != 'NA'"))
+sqlDrop(ch, "DEAD", errors = FALSE) #erases any table on dashDB that has the name df
+sqlSave(ch, DEAD)#creates a new table in dashDB with the name df
+
+#Lists all the Characters still alive
+ALIVE <- sqlQuery(ch, paste("SELECT NAME, ALLEGIANCES, GENDER, NOBILITY FROM CHARACTERDEATHS","WHERE DEATH_YEAR is NULL"))
+ALIVE
+sqlDrop(ch, "ALIVE", errors = FALSE) #erases any table on dashDB that has the name df
+sqlSave(ch, ALIVE)#creates a new table in dashDB with the name df
+
+#characters dead count by allegience 
+ALIVECOUNT <- sqlQuery(ch, paste("SELECT ALLEGIANCES, COUNT(ALLEGIANCES) FROM ALIVE","group by ALLEGIANCES"))
+names(ALIVECOUNT)[2]<-paste("COUNT")
+ALIVECOUNT
+
+#characters dead count by allegience 
+DEATHCOUNT <- sqlQuery(ch, paste("SELECT ALLEGIANCES, COUNT(ALLEGIANCES) FROM DEAD","group by ALLEGIANCES"))
+names(DEATHCOUNT)[2]<-paste("COUNT")
+DEATHCOUNT 
+
+#characters dead table
+deathsByFamily <- plot_ly(data = DEATHCOUNT, x=ALLEGIANCES, y=COUNT,type="bar")
+deathsByFamily
+#characters alive table
+aliveByFamily <- plot_ly(data = ALIVECOUNT, x=ALLEGIANCES, y=COUNT,type="bar")
+aliveByFamily
+
+#deaths by allegiance variables **** NOT USING THIS DATA
+LannisterDeaths <- sqlQuery(ch, paste("SELECT COUNT(*) FROM DEAD", "WHERE ALLEGIANCES = 'Lannister'"))
+StarkDeaths <- sqlQuery(ch, paste("SELECT COUNT(*) FROM DEAD", "WHERE ALLEGIANCES = 'Stark'"))
+BaratheonDeaths <- sqlQuery(ch, paste("SELECT COUNT(*) FROM DEAD", "WHERE ALLEGIANCES = 'Baratheon'"))
+GreyjoyDeaths <- sqlQuery(ch, paste("SELECT COUNT(*) FROM DEAD", "WHERE ALLEGIANCES = 'Greyjoy'"))
+TullyDeaths <- sqlQuery(ch, paste("SELECT COUNT(*) FROM DEAD", "WHERE ALLEGIANCES = 'Tully'"))
+MartellDeaths <- sqlQuery(ch, paste("SELECT COUNT(*) FROM DEAD", "WHERE ALLEGIANCES = 'Martell'"))
+ArrynDeaths <- sqlQuery(ch, paste("SELECT COUNT(*) FROM DEAD", "WHERE ALLEGIANCES = 'Arryn'"))
+
+
+#Counts the tweets per person
+TyrionTweet <- sqlQuery(ch, paste("SELECT COUNT(MESSAGE_BODY) FROM TYRION_TWEETS")) 
+TyrionTweet <-  c(sum(TyrionTweet))
+BranTweet <- sqlQuery(ch, paste("SELECT COUNT(MESSAGE_BODY) FROM BRAN_TWEETS"))
+BranTweet <- c(sum(BranTweet))
+CerseiTweet <- sqlQuery(ch, paste("SELECT COUNT(MESSAGE_BODY) FROM CERSEI_TWEETS"))
+CerseiTweet <- c(sum(CerseiTweet))
+JaimeTweet <- sqlQuery(ch, paste("SELECT COUNT(MESSAGE_BODY) FROM JAIME_TWEETS"))
+JaimeTweet <- c(sum(JaimeTweet))
+NKTweet <- sqlQuery(ch, paste("SELECT COUNT(MESSAGE_BODY) FROM NIGHTKING_TWEETS")) 
+NKTweet <- c(sum(NKTweet))
+SansaTweet <- sqlQuery(ch, paste("SELECT COUNT(MESSAGE_BODY) FROM SANSA_TWEETS")) 
+SansaTweet <- c(sum(SansaTweet))
+AryaTweet <- sqlQuery(ch, paste("SELECT COUNT(MESSAGE_BODY) FROM ARYA_TWEETS"))
+AryaTweet <- c(sum(AryaTweet))
+JonTweet <- sqlQuery(ch, paste("SELECT COUNT(MESSAGE_BODY) FROM JON_TWEETS"))
+JonTweet <- c(sum(JonTweet))
+KhaleesiTweet <- sqlQuery(ch, paste("SELECT COUNT(MESSAGE_BODY) FROM KHALEESI_TWEETS"))
+KhaleesiTweet <- c(sum(KhaleesiTweet))
+
+
+
+totalTargaryenBoats <- 350 #This is based on the season Finale
+
+#Creats the list for the data frame
+characters = c("Tyrion Lannister", "Daenerys Targaryen", "Cersei Lannister", "Jaime Lannister", "Jon Snow", "Sansa Stark", "Bran Stark", "Arya Stark", "The Night King") 
+Allegiances =c("Targaeryen, Unsullied", "Targaryen, Unsullied", "Baratheon, Lannister", "Lannister", "Wildings, Night's Watch, Arryn, Stark", "Arryn, Stark", "Children of the forest, Stark, Reed", "Stark", "none") 
+boats=c(totalTargaryenBoats,totalTargaryenBoats, totalLannisterBoats, totalLannisterBoats, totalStarkBoats+totalArrynBoats,totalStarkBoats+totalArrynBoats,totalStarkBoats,totalStarkBoats,0)
+wins=c(0, 3, totalLannisterWins, totalLannisterWins, totalStarkWins, totalStarkWins, totalStarkWins, totalStarkWins, totalLannisterWins)
+heir=c(0.5,1,0,0,1,0,0,0,0)
+armySize=c(totalTargaryenArmy, totalTargaryenArmy, totalLannisterArmy, totalLannisterArmy, totalStarkArmy+totalArrynArmy, totalStarkArmy+totalArrynArmy, totalStarkArmy, totalStarkArmy, 100000 )
+sp <- c(0,1,0,0,1,0,1,1,1) #character has been directly touched by the supernatural 
+LA <- c(0,1,0,1,1,0,0,0,1) #The character is currently leading an army
+Twitter <- c(TyrionTweet, KhaleesiTweet, CerseiTweet, JaimeTweet, 350000, SansaTweet, BranTweet, AryaTweet, NKTweet)
+#Main data frame to generate percentages
+GOT_TOTALS <- data.frame(CHARACTER=characters, ALLEGIANCES=Allegiances, WARS_WON=wins, THRONE_HEIR=heir, ARMY_SIZE=armySize, SUPERNATURAL=sp, BOATS=boats, LEADING_ARMY=LA, TWITTER=Twitter)
+GOT_TOTALS
+
+
+#For loop will loop through each character to create a percentage for each category 
+for (Character in GOT_TOTALS)
+{
+  AllegiancesCount <- subset(GOT_TOTALS, select=ALLEGIANCES)
+  tmp <- sapply(AllegiancesCount, as.character)
+  tmp
+  test <- strsplit(tmp, ",")
+  test
+  count1 <- lengths(test)
+  count1
+  count <- count1/0.8
+  count #highest number this could be is 5
+  
+  
+  datap <- subset(GOT_TOTALS, select=WARS_WON)
+  Wars_wons <-datap*1.428
+  
+  datar<- subset(GOT_TOTALS, select=THRONE_HEIR)
+  ThroneHeir <- ifelse(datar==1, 15, 0)
+  ThroneHeir <- ifelse(datar==0.5, 7.5, ThroneHeir)
+  
+  datar<- subset(GOT_TOTALS, select=LEADING_ARMY)
+  leadingArmy <- ifelse(datar==1, 20, 0)
+  
+  Armysize <- subset(GOT_TOTALS, select=ARMY_SIZE)
+  Armysize <- (Armysize/40000)
+  
+  datat<- subset(GOT_TOTALS, select=SUPERNATURAL)
+  sNatural <- ifelse(datat==1, 20, 0)
+  
+  boatss<- subset(GOT_TOTALS, select=BOATS)
+  boatss <- (boatss/200)
+  
+  datax<- subset(GOT_TOTALS, select=LEADING_ARMY)
+  leadingArmy <- ifelse(datax==1, 20, 0)
+  
+  dataj <- subset(GOT_TOTALS, select=TWITTER)
+  twitterData <- dataj/20000
+  
+  TOTALDATA1 <- Wars_wons+ThroneHeir+leadingArmy+Armysize+sNatural+boatss+count+twitterData
+  dd <- sum(TOTALDATA1)
+  TOTALDATA <- ((Wars_wons+ThroneHeir+leadingArmy+Armysize+sNatural+boatss+count+twitterData)/dd)*100
+  
+  
+  names(TOTALDATA1)<-paste("PERCENTAGE")
+  names(TOTALDATA)<-paste("PERCENTAGE")
+  
+  FINALTABLE <- data.frame(CHARACTER=characters, ALLEGIANCES=count1, ALLEGIANCE_WARS_WON=subset(GOT_TOTALS, select=WARS_WON), THRONE_HEIR=subset(GOT_TOTALS, select=THRONE_HEIR), ARMY_SIZE=subset(GOT_TOTALS, select=ARMY_SIZE), SUPERNATURAL=subset(GOT_TOTALS, select=SUPERNATURAL), BOATS=subset(GOT_TOTALS, select=BOATS), LEADING_ARMY=subset(GOT_TOTALS, select=LEADING_ARMY), TWITTER=dataj <- subset(GOT_TOTALS, select=TWITTER), PERCENTAGE=TOTALDATA)
+  PERCENTAGETABLE <-  data.frame(CHARACTER=characters, ALLEGIANCES=(count/dd)*100, WARS_WON=(Wars_wons/dd)*100, THRONE_HEIR=(ThroneHeir/dd)*100, ARMY_SIZE=(Armysize/dd)*100, SUPERNATURAL=(sNatural/dd)*100, BOATS=(boatss/dd)*100, LEADING_ARMY=(leadingArmy/dd)*100, TWITTER=(twitterData/dd)*100, PERCENTAGE=TOTALDATA)
+}
+
+#create new tables into dashDB
+sqlDrop(ch, "FINALTABLE", errors = FALSE) #erases any table on dashDB that has this name
+sqlSave(ch, FINALTABLE)#creates a new table in dashDB with this name 
+sqlDrop(ch, "PERCENTAGETABLE", errors = FALSE) #erases any table on dashDB that has this name 
+sqlSave(ch, PERCENTAGETABLE)#creates a new table in dashDB with this name
+
+
+#Percentage breakdown of each character to find twitter
+TYRIONLANNISTER <- sqlQuery(ch, paste("SELECT CHARACTER, ALLEGIANCES, WARS_WON, THRONE_HEIR, ARMY_SIZE, SUPERNATURAL, BOATS, LEADING_ARMY, TWITTER, PERCENTAGE FROM PERCENTAGETABLE", "WHERE CHARACTER = 'Tyrion Lannister'")) 
+
+TyrionT <-TYRIONLANNISTER$TWITTER
+TyrionB <-TYRIONLANNISTER$BOATS
+TyrionLA <- TYRIONLANNISTER$LEADING_ARMY
+TyrionSP <- TYRIONLANNISTER$SUPERNATURAL
+TyrionAS <- TYRIONLANNISTER$ARMY_SIZE
+TyrionTH <- TYRIONLANNISTER$THRONE_HEIR
+TyrionWW <- TYRIONLANNISTER$WARS_WON
+TyrionA <- TYRIONLANNISTER$ALLEGIANCES
+
+ds <- data.frame(labels = c("Twitter", "Boats", "Leading", "SuperNatural", "Army size", "Throne Heir", "Wars Won", "Allegiances"),
+                 values = c(TyrionT, TyrionB, TyrionLA, TyrionSP, TyrionAS, TyrionTH, TyrionWW, TyrionA))
+plot_ly(ds, labels = labels, values = values, type = "pie") %>%
+  layout(title = "Tyrion")
+
+DaenerysTargaryen <- sqlQuery(ch, paste("SELECT CHARACTER, ALLEGIANCES, WARS_WON, THRONE_HEIR, ARMY_SIZE, SUPERNATURAL, BOATS, LEADING_ARMY, TWITTER, PERCENTAGE FROM PERCENTAGETABLE", "WHERE CHARACTER = 'Daenerys Targaryen'")) 
+
+DaenerysT <-DaenerysTargaryen$TWITTER
+DaenerysB <-DaenerysTargaryen$BOATS
+DaenerysLA <- DaenerysTargaryen$LEADING_ARMY
+DaenerysSP <- DaenerysTargaryen$SUPERNATURAL
+DaenerysAS <- DaenerysTargaryen$ARMY_SIZE
+DaenerysTH <- DaenerysTargaryen$THRONE_HEIR
+DaenerysWW <- DaenerysTargaryen$WARS_WON
+DaenerysA <- DaenerysTargaryen$ALLEGIANCES
+
+ds <- data.frame(labels = c("Twitter", "Boats", "Leading", "SuperNatural", "Army size", "Throne Heir", "Wars Won", "Allegiances"),
+                 values = c(DaenerysT, DaenerysB, DaenerysLA, DaenerysSP, DaenerysAS, DaenerysTH, DaenerysWW, DaenerysA))
+plot_ly(ds, labels = labels, values = values, type = "pie") %>%
+  layout(title = "Khaleesi")
+
+CerseiLannister <- sqlQuery(ch, paste("SELECT CHARACTER, ALLEGIANCES, WARS_WON, THRONE_HEIR, ARMY_SIZE, SUPERNATURAL, BOATS, LEADING_ARMY, TWITTER, PERCENTAGE FROM PERCENTAGETABLE", "WHERE CHARACTER = 'Cersei Lannister'"))
+
+CerseiT <-CerseiLannister$TWITTER
+CerseiB <-CerseiLannister$BOATS
+CerseiLA <- CerseiLannister$LEADING_ARMY
+CerseiSP <- CerseiLannister$SUPERNATURAL
+CerseiAS <- CerseiLannister$ARMY_SIZE
+CerseiTH <- CerseiLannister$THRONE_HEIR
+CerseiWW <- CerseiLannister$WARS_WON
+CerseiA <- CerseiLannister$ALLEGIANCES
+
+ds <- data.frame(labels = c("Twitter", "Boats", "Leading", "SuperNatural", "Army size", "Throne Heir", "Wars Won", "Allegiances"),
+                 values = c(CerseiT, CerseiB, CerseiLA, CerseiSP, CerseiAS, CerseiTH, CerseiWW, CerseiA))
+plot_ly(ds, labels = labels, values = values, type = "pie") %>%
+  layout(title = "Cersei Lannister")
+
+
+JaimeLannister <- sqlQuery(ch, paste("SELECT CHARACTER, ALLEGIANCES, WARS_WON, THRONE_HEIR, ARMY_SIZE, SUPERNATURAL, BOATS, LEADING_ARMY, TWITTER, PERCENTAGE FROM PERCENTAGETABLE", "WHERE CHARACTER = 'Jaime Lannister'"))
+
+JaimeT <-JaimeLannister$TWITTER
+JaimeB <-JaimeLannister$BOATS
+JaimeLA <- JaimeLannister$LEADING_ARMY
+JaimeSP <- JaimeLannister$SUPERNATURAL
+JaimeAS <- JaimeLannister$ARMY_SIZE
+JaimeTH <- JaimeLannister$THRONE_HEIR
+JaimeWW <- JaimeLannister$WARS_WON
+JaimeA <- JaimeLannister$ALLEGIANCES
+
+ds <- data.frame(labels = c("Twitter", "Boats", "Leading", "SuperNatural", "Army size", "Throne Heir", "Wars Won", "Allegiances"),
+                 values = c(JaimeT, JaimeB, JaimeLA, JaimeSP, JaimeAS, JaimeTH, JaimeWW, JaimeA))
+plot_ly(ds, labels = labels, values = values, type = "pie") %>%
+  layout(title = "Jaime Lannister")
+
+JonSnow <- sqlQuery(ch, paste("SELECT CHARACTER, ALLEGIANCES, WARS_WON, THRONE_HEIR, ARMY_SIZE, SUPERNATURAL, BOATS, LEADING_ARMY, TWITTER, PERCENTAGE FROM PERCENTAGETABLE", "WHERE CHARACTER = 'Jon Snow'"))
+
+JonSnowT <-JonSnow$TWITTER
+JonSnowB <-JonSnow$BOATS
+JonSnowLA <- JonSnow$LEADING_ARMY
+JonSnowSP <- JonSnow$SUPERNATURAL
+JonSnowAS <- JonSnow$ARMY_SIZE
+JonSnowTH <- JonSnow$THRONE_HEIR
+JonSnowWW <- JonSnow$WARS_WON
+JonSnowA <- JonSnow$ALLEGIANCES
+
+ds <- data.frame(labels = c("Twitter", "Boats", "Leading", "SuperNatural", "Army size", "Throne Heir", "Wars Won", "Allegiances"),
+                 values = c(JonSnowT, JonSnowB, JonSnowLA, JonSnowSP, JonSnowAS, JonSnowTH, JonSnowWW, JonSnowA))
+plot_ly(ds, labels = labels, values = values, type = "pie") %>%
+  layout(title = "Jon Snow")
+
+SansaStark <- sqlQuery(ch, paste("SELECT CHARACTER, ALLEGIANCES, WARS_WON, THRONE_HEIR, ARMY_SIZE, SUPERNATURAL, BOATS, LEADING_ARMY, TWITTER, PERCENTAGE FROM PERCENTAGETABLE", "WHERE CHARACTER = 'Sansa Stark'"))
+
+SansaT <-SansaStark$TWITTER
+SansaB <-SansaStark$BOATS
+SansaLA <- SansaStark$LEADING_ARMY
+SansaSP <- SansaStark$SUPERNATURAL
+SansaAS <- SansaStark$ARMY_SIZE
+SansaTH <- SansaStark$THRONE_HEIR
+SansaWW <- SansaStark$WARS_WON
+SansaA <- SansaStark$ALLEGIANCES
+
+ds <- data.frame(labels = c("Twitter", "Boats", "Leading", "SuperNatural", "Army size", "Throne Heir", "Wars Won", "Allegiances"),
+                 values = c(SansaT, SansaB, SansaLA, SansaSP, SansaAS, SansaTH, SansaWW, SansaA))
+plot_ly(ds, labels = labels, values = values, type = "pie") %>%
+  layout(title = "Sansa Stark")
+
+BranStark <- sqlQuery(ch, paste("SELECT CHARACTER, ALLEGIANCES, WARS_WON, THRONE_HEIR, ARMY_SIZE, SUPERNATURAL, BOATS, LEADING_ARMY, TWITTER, PERCENTAGE FROM PERCENTAGETABLE", "WHERE CHARACTER = 'Bran Stark'"))
+
+BranT <-BranStark$TWITTER
+BranB <-BranStark$BOATS
+BranLA <- BranStark$LEADING_ARMY
+BranSP <- BranStark$SUPERNATURAL
+BranAS <- BranStark$ARMY_SIZE
+BranTH <- BranStark$THRONE_HEIR
+BranWW <- BranStark$WARS_WON
+BranA <- BranStark$ALLEGIANCES
+
+ds <- data.frame(labels = c("Twitter", "Boats", "Leading", "SuperNatural", "Army size", "Throne Heir", "Wars Won", "Allegiances"),
+                 values = c(BranT, BranB, BranLA, BranSP, BranAS, BranTH, BranWW, BranA))
+plot_ly(ds, labels = labels, values = values, type = "pie") %>%
+  layout(title = "Bran Stark")
+
+AryaStark <- sqlQuery(ch, paste("SELECT CHARACTER, ALLEGIANCES, WARS_WON, THRONE_HEIR, ARMY_SIZE, SUPERNATURAL, BOATS, LEADING_ARMY, TWITTER, PERCENTAGE FROM PERCENTAGETABLE", "WHERE CHARACTER = 'Arya Stark'"))
+
+AryaT <-AryaStark$TWITTER
+AryaB <-AryaStark$BOATS
+AryaLA <- AryaStark$LEADING_ARMY
+AryaSP <- AryaStark$SUPERNATURAL
+AryaAS <- AryaStark$ARMY_SIZE
+AryaTH <- AryaStark$THRONE_HEIR
+AryaWW <- AryaStark$WARS_WON
+AryaA <- AryaStark$ALLEGIANCES
+
+ds <- data.frame(labels = c("Twitter", "Boats", "Leading", "SuperNatural", "Army size", "Throne Heir", "Wars Won", "Allegiances"),
+                 values = c(AryaT, AryaB, AryaLA, AryaSP, AryaAS, AryaTH, AryaWW, AryaA))
+plot_ly(ds, labels = labels, values = values, type = "pie") %>%
+  layout(title = "Arya Stark")
+
+TheNightKing <- sqlQuery(ch, paste("SELECT CHARACTER, ALLEGIANCES, WARS_WON, THRONE_HEIR, ARMY_SIZE, SUPERNATURAL, BOATS, LEADING_ARMY, TWITTER, PERCENTAGE FROM PERCENTAGETABLE", "WHERE CHARACTER = 'The Night King'"))
+TheNightKing
+
+TheNightKingT <-TheNightKing$TWITTER
+TheNightKingB <-TheNightKing$BOATS
+TheNightKingLA <- TheNightKing$LEADING_ARMY
+TheNightKingSP <- TheNightKing$SUPERNATURAL
+TheNightKingAS <- TheNightKing$ARMY_SIZE
+TheNightKingTH <- TheNightKing$THRONE_HEIR
+TheNightKingWW <- TheNightKing$WARS_WON
+TheNightKingA <- TheNightKing$ALLEGIANCES
+
+ds <- data.frame(labels = c("Twitter", "Boats", "Leading", "SuperNatural", "Army size", "Throne Heir", "Wars Won", "Allegiances"),
+                 values = c(TheNightKingT, TheNightKingB, TheNightKingLA, TheNightKingSP, TheNightKingAS, TheNightKingTH, TheNightKingWW, TheNightKingA))
+plot_ly(ds, labels = labels, values = values, type = "pie") %>%
+  layout(title = "The Night King")
+
+
+
+##This has the final scores broken down per character by percentages
+q <- plot_ly(
+  x = PERCENTAGETABLE$CHARACTER,
+  y = PERCENTAGETABLE$WARS_WON,
+  name = "Wars Won",
+  type = "bar")
+
+q2 <- add_trace(
+  q,
+  x = PERCENTAGETABLE$CHARACTER,
+  y = PERCENTAGETABLE$THRONE_HEIR,
+  name = "Throne Heir",
+  type = "bar")
+
+q3 <- add_trace(
+  q2,
+  x = PERCENTAGETABLE$CHARACTER,
+  y = PERCENTAGETABLE$ARMY_SIZE,
+  name = "ARMY SIZE",
+  type = "bar")
+
+q4 <- add_trace(
+  q3,
+  x = PERCENTAGETABLE$CHARACTER,
+  y = PERCENTAGETABLE$SUPERNATURAL,
+  name = "SuperNatural",
+  type = "bar")
+
+q5 <- add_trace(
+  q4,
+  x = PERCENTAGETABLE$CHARACTER,
+  y = PERCENTAGETABLE$BOATS,
+  name = "Boats",
+  type = "bar")
+
+q6 <- add_trace(
+  q5,
+  x = PERCENTAGETABLE$CHARACTER,
+  y = PERCENTAGETABLE$LEADING_ARMY,
+  name = "Leads Army",
+  type = "bar")
+
+q7 <- add_trace(
+  q6,
+  x = PERCENTAGETABLE$CHARACTER,
+  y = PERCENTAGETABLE$TWITTER,
+  name = "Tweets",
+  type = "bar")
+
+
+q8 <- add_trace(
+  q7,
+  x = PERCENTAGETABLE$CHARACTER,
+  y = PERCENTAGETABLE$ALLEGIANCES,
+  name = "Allegiances",
+  type = "bar")
+
+
+
+ax <- list(
+  title = "",
+  zeroline = FALSE,
+  showline = TRUE,
+  showticklabels = TRUE,
+  showgrid = TRUE
+)
+
+ay <- list(
+  title = "CHANCE OF RULING %",
+  zeroline = FALSE,
+  showline = TRUE,
+  showticklabels = TRUE,
+  showgrid = TRUE
+)
+
+qfinals <- layout(q8, barmode = "stack", title = "RULER OF WESTEROS PERCENTAGE BREAKDOWN", xaxis = ax, yaxis = ay )  %>% 
+  layout(margin = list(b = 160), xaxis = list(tickangle = 45))
+
+#Find percentage
+TLannister <-TYRIONLANNISTER$PERCENTAGE
+TTargaryen <-DaenerysTargaryen$PERCENTAGE
+CLannister <- CerseiLannister$PERCENTAGE
+JLannister <- JaimeLannister$PERCENTAGE
+JSnow <- JonSnow$PERCENTAGE
+SStark <- SansaStark$PERCENTAGE
+BStark <- BranStark$PERCENTAGE
+AStark <- AryaStark$PERCENTAGE
+TNK <- TheNightKing$PERCENTAGE
+
+
+#Pie chart of totals
+ds <- data.frame(labels = c("Tyrion Lannister", "Daenerys Targaryen", "Cersei Lannister", "Jaime Lannister", "Jon Snow", "Sansa Stark", "Bran Stark", "Arya Stark", "The Night King"),
+                 values = c(TLannister, TTargaryen, CLannister, JLannister, JSnow, SStark, BStark, AStark, TNK))
+plot_ly(ds, labels = labels, values = values, type = "pie") %>%
+  layout(title = "Next Ruler Of Westeros")
+
