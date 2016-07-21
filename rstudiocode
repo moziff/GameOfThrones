@@ -1,6 +1,6 @@
 #Author: Saraida Holguin 
 #Last Update: July 21, 2016
-#Honor Code: I pledge that this program represents my own program code
+
 
 library(RODBC) #Package RODBC implements ODBC database connectivity
 library(sqldf) # Manipulate R data frames using SQL.
