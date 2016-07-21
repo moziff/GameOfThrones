@@ -8,7 +8,7 @@ dsn_database <- "BLUDB"
 dsn_hostname <- "ENTER HOSTNAME" 
 dsn_port <- "50000" 
 dsn_protocol <- "ENTER PROTOCOL" 
-dsn_uid <- "ENTER Uid"
+dsn_uid <- "ENTER UID"
 dsn_pwd <- "ENTER PASSWORD"
 
 conn_path <- paste(dsn_driver,
