@@ -7,4 +7,4 @@ The conditions that are used to generate this prediction are boats by family, Ar
 
 This was made using IBM services such as dashDB found on IBM Bluemix and RStudio found on IBM Data Science Experience.
 
-This data is later pushed into Watson Analytics for further observation.
+This data is later pushed into Watson Analytics for further observation, and visuals were displayed on a node.js webapp on IBM BLuemix.
