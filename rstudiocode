@@ -1,6 +1,10 @@
 #Author: Saraida Holguin 
 #Last Update: July 21, 2016
 
+install.packages("RODBC")
+install.packages("sqldf")
+install.packages("plotly")
+
 
 library(RODBC) #Package RODBC implements ODBC database connectivity
 library(sqldf) # Manipulate R data frames using SQL.
